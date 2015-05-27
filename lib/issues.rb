@@ -68,10 +68,10 @@ module Issues
 
     def assign_homework
       course = prompt("What class (Github Org) would you like to assign
-                       homework for?", /^\w+$/)
+                       homework for?", /^[\w\-]+$/)
       repo = prompt("What repo do you use to track homework?", /^\w+$/)
       team = prompt("What team are your students on?", /^\w+$/)
-      title = prompt("What is the title of this homework?", /^\w+$/)
+      title = prompt("What is the title of this homework?", /^[\w\-\ ]+$/)
       gist_id = prompt("What is the Gist Id for this homework issue?",
                        /^[0-9a-f]{20}$/)
 
