@@ -34,7 +34,53 @@ module Issues
       response['files'].values.first['content']
     end
 
-    def create_issue
+    def create_issue(owner_id, repo_id, title, body=nil, assignee=nil)
+      params = {
+        title: title,
+        body: body,
+        assignee: assignee
+      }
+      options = { body: params.to_json }
+      self.class.post("/repos/#{owner_id}/#{repo_id}/issues", options)
+    end
+  end
+
+  class App
+    def initialize
+      @github = Github.new
+    end
+
+    def prompt(question, validator)
+      puts question
+      input = gets.chomp
+      until input =~ validator
+        puts "Sorry, I didn't understand that."
+        puts question
+        input = gets.chomp
+      end
+      input
+    end
+
+    def confirm?(question)
+      answer = prompt(question, /^[yn]$/i)
+      answer.upcase == 'Y'
+    end
+
+    def assign_homework
+      course = prompt("What class (Github Org) would you like to assign
+                       homework for?", /^\w+$/)
+      repo = prompt("What repo do you use to track homework?", /^\w+$/)
+      team = prompt("What team are your students on?", /^\w+$/)
+      title = prompt("What is the title of this homework?", /^\w+$/)
+      gist_id = prompt("What is the Gist Id for this homework issue?",
+                       /^[0-9a-f]{20}$/)
+
+      body = @github.get_gist_content(gist_id)
+      students = @github.get_team_by_name(course, team)
+      students.each do |student|
+        @github.create_issue(course, repo, title,
+                             body, student['login'])
+      end
     end
   end
 end
