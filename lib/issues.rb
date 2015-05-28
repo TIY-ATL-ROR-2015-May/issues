@@ -33,6 +33,7 @@ module Issues
         page += 1
         response = self.list_followers(user, page)
       end
+      followers
     end
 
     def get_page_count(response)
