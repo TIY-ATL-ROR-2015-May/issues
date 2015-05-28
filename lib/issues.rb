@@ -28,12 +28,12 @@ module Issues
       followers = []
       page = 1
       response = self.list_followers(user, page)
-      until response.length == 0
+      while response.length == 30
         followers += response
         page += 1
         response = self.list_followers(user, page)
       end
-      followers
+      followers + response
     end
 
     def get_page_count(response)
