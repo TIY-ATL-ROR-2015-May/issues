@@ -19,6 +19,37 @@ module Issues
       self.class.get("/teams/#{team_id}/members")
     end
 
+    def list_followers(user, page=1)
+      options = { query: { page: page } }
+      self.class.get("/users/#{user}/followers", options)
+    end
+
+    def list_all_followers(user)
+      followers = []
+      page = 1
+      response = self.list_followers(user, page)
+      until response.length == 0
+        followers += response
+        page += 1
+        response = self.list_followers(user, page)
+      end
+    end
+
+    def get_page_count(response)
+      response.headers['link'].split(', ').find do |link|
+        link.match(/rel=\"last\"/)
+      end.match(/page=(\d+)/)[1].to_i
+    end
+
+    def list_issues(owner, repo)
+      params = {
+        sort: 'created', # Could also be updated or comments.
+        direction: 'desc' # Could also be 'asc'.
+      }
+      options = { query: params }
+      self.class.get("repos/#{owner}/#{repo}/issues", options)
+    end
+
     def get_team_by_name(org_id, team_name)
       teams = self.list_teams(org_id)
       team = teams.find { |x| x['name'] == team_name }
@@ -32,6 +63,14 @@ module Issues
     def get_gist_content(gist_id)
       response = self.get_gist(gist_id)
       response['files'].values.first['content']
+    end
+
+    def create_comment(owner, repo, issue_id, comment)
+      params = {
+        body: comment
+      }
+      options = { body: params.to_json }
+      self.class.post("/repos/#{owner}/#{repo}/issues/#{issue_id}/comments", options)
     end
 
     def create_issue(owner_id, repo_id, title, body=nil, assignee=nil)
