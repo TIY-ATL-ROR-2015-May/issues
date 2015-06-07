@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 # Specify your gem's dependencies in issues.gemspec
-# gemspec
+gemspec
 
 gem 'httparty'
 

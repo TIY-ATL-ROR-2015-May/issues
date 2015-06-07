@@ -1,5 +1,3 @@
-$LOAD_PATH.unshift(File.dirname(__FILE__))
-
 require 'pry'
 require 'httparty'
 
@@ -9,18 +7,30 @@ module Issues
   class Github
     include HTTParty
     base_uri 'https://api.github.com'
-    basic_auth ENV['GH_USER'], ENV['GH_PASS']
+
+    def initialize(auth_token=nil)
+      auth_token ||= ENV["OAUTH_TOKEN"]
+      @headers = {
+        'Authorization' => "token #{auth_token}",
+        'User-Agent'    => 'HTTParty'
+      }
+    end
 
     def list_teams(org_id)
-      self.class.get("/orgs/#{org_id}/teams")
+      self.class.get("/orgs/#{org_id}/teams",
+                     headers: @headers)
     end
 
     def list_members(team_id)
-      self.class.get("/teams/#{team_id}/members")
+      self.class.get("/teams/#{team_id}/members",
+                     headers: @headers)
     end
 
     def list_followers(user, page=1)
-      options = { query: { page: page } }
+      options = {
+        headers: @headers,
+        query: { page: page }
+      }
       self.class.get("/users/#{user}/followers", options)
     end
 
@@ -47,7 +57,10 @@ module Issues
         sort: 'created', # Could also be updated or comments.
         direction: 'desc' # Could also be 'asc'.
       }
-      options = { query: params }
+      options = {
+        headers: @headers,
+        query: params
+      }
       self.class.get("repos/#{owner}/#{repo}/issues", options)
     end
 
@@ -58,7 +71,8 @@ module Issues
     end
 
     def get_gist(gist_id)
-      self.class.get("/gists/#{gist_id}")
+      self.class.get("/gists/#{gist_id}",
+                     headers: @headers)
     end
 
     def get_gist_content(gist_id)
@@ -70,7 +84,10 @@ module Issues
       params = {
         body: comment
       }
-      options = { body: params.to_json }
+      options = {
+        body: params.to_json,
+        headers: @headers
+      }
       self.class.post("/repos/#{owner}/#{repo}/issues/#{issue_id}/comments", options)
     end
 
@@ -80,12 +97,17 @@ module Issues
         body: body,
         assignee: assignee
       }
-      options = { body: params.to_json }
+      options = {
+        body: params.to_json,
+        headers: @headers
+      }
+
       self.class.post("/repos/#{owner_id}/#{repo_id}/issues", options)
     end
   end
 
   class App
+
     def initialize
       @github = Github.new
     end
